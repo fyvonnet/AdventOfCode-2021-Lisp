@@ -7,19 +7,18 @@
 (defun count-increases (measurements)
   (if (= (length measurements) 1)
     0
-    (+
-      (if (< (first measurements) (second measurements)) 1 0)
-      (count-increases (cdr measurements)))))
+    (destructuring-bind (a b &rest _) measurements
+      (+ (if (< a b) 1 0) (count-increases (cdr measurements))))))
 
 (defun sums-of-three (measurements)
   (unless (= (length measurements) 2)
     (cons
-      (+ (first measurements) (second measurements) (third measurements))
+      (destructuring-bind (a b c &rest _) measurements (+ a b c))
       (sums-of-three (cdr measurements)))))
 
 (defun main ()
   (let
-    ((input (read-input-as-list 1 #'parse-integer )))
+    ((input (read-input-as-list 1 #'parse-integer)))
     (dolist (func '(identity sums-of-three))
       (print (count-increases (funcall func input))))))
 
