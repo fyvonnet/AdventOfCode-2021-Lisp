@@ -4,38 +4,43 @@
 
 (in-package :day03)
 
-(defun decode (line)
-  (map 'list (lambda (c) (if (char= c #\0) 0 1)) line))
+(defun bin-to-dec (bits &optional (invert nil))
+  (reduce
+    (lambda (d b) (+ (if (zerop b) 0 1) (* 2 d)))
+    (map 'list (lambda (c) (if (char= c (if invert #\1 #\0)) 0 1)) bits)
+    :initial-value 0))
 
-(defun count-bits (numbers &optional new-numbers (counters '(0 . 0)))
-  (destructuring-bind (zeros . ones) counters
-    (if (null numbers)
-      (list new-numbers (if (< ones zeros) 0 1))
-      (let ((n (car numbers)))
-        (count-bits
-          (cdr numbers)
-          (cons (cdr n) new-numbers)
-          (if (zerop (car n))
-            (cons (1+ zeros) ones)
-            (cons zeros (1+ ones))))))))
+(defun sort-numbers (n numbers &optional (sorted '(nil . nil)))
+  (if (null numbers)
+    sorted
+    (sort-numbers
+      n
+      (cdr numbers)
+      (destructuring-bind (zeros . ones) sorted
+        (if (char= #\0 (char (car numbers) n))
+          (cons (cons (car numbers) zeros) ones)
+          (cons zeros (cons (car numbers) ones)))))))
 
-(defun gamma-rate (numbers &optional bits)
-  (if (null (car numbers))
-    (reverse bits)
-    (destructuring-bind (new-numbers bit) (count-bits numbers)
-      (gamma-rate new-numbers (cons bit bits)))))
+(defun gamma-rate (numbers &optional (n 0))
+  (unless (= n (length (car numbers)))
+    (cons
+      (destructuring-bind (zeros . ones) (sort-numbers n numbers)
+        (if (> (length zeros) (length ones)) #\0 #\1))
+      (gamma-rate numbers (1+ n)))))
 
-(defun bin-to-dec (bits &optional (n 0))
-  (if (null bits)
-    n
-    (bin-to-dec (cdr bits) (+ (car bits) (* 2 n)))))
+(defun rating (compare numbers &optional (n 0))
+  (if (= 1 (length numbers))
+    (bin-to-dec (car numbers))
+    (rating
+      compare
+      (destructuring-bind (zeros . ones) (sort-numbers n numbers)
+        (if (funcall compare (length zeros) (length ones)) zeros ones))
+      (1+ n))))
 
 (defun main ()
   (let*
-    ((input (read-input-as-list 3 #'decode))
-     (gamma (gamma-rate input)))
-    (print
-      (* 
-        (bin-to-dec gamma)
-        (bin-to-dec (mapcar (lambda (b) (if (zerop b) 1 0)) gamma))))))
+    ((numbers (read-input-as-list 3))
+     (gamma (gamma-rate numbers)))
+    (print (* (bin-to-dec gamma) (bin-to-dec gamma t)))
+    (print (* (rating #'> numbers) (rating #'<= numbers)))))
 
