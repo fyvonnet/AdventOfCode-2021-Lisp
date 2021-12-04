@@ -35,15 +35,16 @@
 
 (defun sum-winning-board (coord)
   (destructuring-bind (b _ _) coord
-    (reduce
-      (lambda (s c) (if (aref-boards marked c) s (+ s (aref-boards boards c))))
-      (iterate
-        (for y below 5)
-        (appending 
-          (iterate
-            (for x below 5)
-            (collect `(,b ,y ,x)))))
-      :initial-value 0)))
+    (iterate
+      (for y below 5)
+      (sum
+        (iterate
+          (for x below 5)
+          (let ((coord `(,b ,y ,x)))
+            (sum
+              (if (aref-boards marked coord)
+                0
+                (aref-boards boards coord)))))))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
