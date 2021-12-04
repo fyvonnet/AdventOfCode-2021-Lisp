@@ -20,18 +20,6 @@
         (mapcar (lambda (l) (decode l "\\s+")) (list a b c d e))
         (make-boards rest)))))
 
-(defun all-row-coords (coord)
-  (destructuring-bind (b y _) coord
-    (iterate
-      (for x below 5)
-      (collect `(,b ,y ,x)))))
-
-(defun all-col-coords (coord)
-  (destructuring-bind (b _ x) coord
-    (iterate
-      (for y below 5)
-      (collect `(,b ,y ,x)))))
-
 (defun sum-winning-board (coord)
   (destructuring-bind (b _ _) coord
     (iterate
@@ -42,17 +30,22 @@
           (let ((value (aref-boards boards `(,b ,y ,x))))
             (sum (if value value 0))))))))
 
+(defun check-winner (coord switch)
+  (destructuring-bind (b y x) coord
+    (iterate
+      (with coord = (if switch (list b y 0) (list b 0 x)))
+      (repeat 5)
+      (cond
+        ((aref-boards boards coord) (leave nil))
+        (switch (incf (third  coord)))
+        (t (incf (second coord))))
+      (finally (return t)))))
+
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
 
 (defun (setf aref-boards) (value boards coord)
   (setf (apply #'aref (cons boards coord)) value))
-
-(defun check-winner (coords)
-  (if (null coords)
-    t
-    (unless (aref-boards boards (car coords))
-      (check-winner (cdr coords)))))
 
 (defun mark-number (winners number &optional (coords (aref locations number)))
   (if (null coords)
@@ -64,8 +57,8 @@
           (and
             (aref still-playing (car first-coord))
             (or
-              (check-winner (all-row-coords first-coord))
-              (check-winner (all-col-coords first-coord))))
+              (check-winner first-coord t  )
+              (check-winner first-coord nil)))
           (progn
             (setf (aref still-playing (car first-coord)) nil)
             (cons (* number (sum-winning-board first-coord)) winners))
