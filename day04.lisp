@@ -5,9 +5,8 @@
 
 (in-package :day04)
 
-(defvar boards)
-(defvar marked)
-(defvar locations)
+(defvar boards       )
+(defvar locations    )
 (defvar still-playing)
 
 (defun decode (line re)
@@ -40,11 +39,8 @@
       (sum
         (iterate
           (for x below 5)
-          (let ((coord `(,b ,y ,x)))
-            (sum
-              (if (aref-boards marked coord)
-                0
-                (aref-boards boards coord)))))))))
+          (let ((value (aref-boards boards `(,b ,y ,x))))
+            (sum (if value value 0))))))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
@@ -55,14 +51,14 @@
 (defun check-winner (coords)
   (if (null coords)
     t
-    (when (aref-boards marked (car coords))
+    (unless (aref-boards boards (car coords))
       (check-winner (cdr coords)))))
 
 (defun mark-number (winners number &optional (coords (aref locations number)))
   (if (null coords)
     winners
     (destructuring-bind (first-coord &rest rest-coords) coords
-      (setf (aref-boards marked first-coord) t)
+      (setf (aref-boards boards first-coord) nil)
       (mark-number
         (if 
           (and
@@ -79,16 +75,14 @@
 
 (defun main ()
   (let*
-    ((input (read-input-as-list 4))
-     (numbers (decode (car input) ","))
-     (boards-list (make-boards (cdr input)))
-     (boards-count (length boards-list))
-     (dimensions (list boards-count 5 5)))
+    ((input        (read-input-as-list 4   ))
+     (numbers      (decode (car input) "," ))
+     (boards-list  (make-boards (cdr input)))
+     (boards-count (length boards-list     )))
 
-    (setf boards        (make-array dimensions              :initial-contents boards-list))
-    (setf marked        (make-array dimensions              :initial-element  nil        ))
-    (setf locations     (make-array (list (length numbers)) :initial-element  nil        ))
-    (setf still-playing (make-array `(,boards-count)        :initial-element  t          ))
+    (setf boards        (make-array  (list boards-count 5 5) :initial-contents boards-list))
+    (setf locations     (make-array  (list (length numbers)) :initial-element  nil        ))
+    (setf still-playing (make-array `(,boards-count)         :initial-element  t          ))
 
     (iterate
       (for b below (length boards-list))
