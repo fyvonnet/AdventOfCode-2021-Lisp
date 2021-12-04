@@ -1,15 +1,14 @@
 (defpackage :day04
   (:use :cl :aoc-misc :iterate)
   (:export main)
-  (:import-from :cl-ppcre :split)
-  (:import-from :trivia :match)
-  )
+  (:import-from :cl-ppcre :split))
 
 (in-package :day04)
 
 (defvar boards)
 (defvar marked)
 (defvar locations)
+(defvar still-playing)
 
 (defun decode (line re)
   (unless (zerop (length line))
@@ -58,32 +57,37 @@
     (when (aref-boards marked (car coords))
       (check-winner (cdr coords)))))
 
-(defun mark-number (number &optional (coords (aref locations number)))
-  (when coords
+(defun mark-number (winners number &optional (coords (aref locations number)))
+  (if (null coords)
+    winners
     (destructuring-bind (first-coord &rest rest-coords) coords
       (setf (aref-boards marked first-coord) t)
-      (if 
-        (or
-          (check-winner (all-row-coords first-coord))
-          (check-winner (all-col-coords first-coord)))
-        (* number (sum-winning-board first-coord))
-        (mark-number number rest-coords)))))
-
-(defun play-bingo (numbers)
-  (match (mark-number (car numbers))
-    (nil (play-bingo (cdr numbers)))
-    (x x)))
+      (mark-number
+        (if 
+          (and
+            (aref still-playing (car first-coord))
+            (or
+              (check-winner (all-row-coords first-coord))
+              (check-winner (all-col-coords first-coord))))
+          (progn
+            (setf (aref still-playing (car first-coord)) nil)
+            (cons (* number (sum-winning-board first-coord)) winners))
+          winners)
+        number
+        rest-coords))))
 
 (defun main ()
   (let*
     ((input (read-input-as-list 4))
      (numbers (decode (car input) ","))
      (boards-list (make-boards (cdr input)))
-     (dimensions (list (length boards-list) 5 5)))
+     (boards-count (length boards-list))
+     (dimensions (list boards-count 5 5)))
 
-    (setf boards    (make-array dimensions              :initial-contents boards-list))
-    (setf marked    (make-array dimensions              :initial-element  nil))
-    (setf locations (make-array (list (length numbers)) :initial-element  nil))
+    (setf boards        (make-array dimensions              :initial-contents boards-list))
+    (setf marked        (make-array dimensions              :initial-element  nil        ))
+    (setf locations     (make-array (list (length numbers)) :initial-element  nil        ))
+    (setf still-playing (make-array `(,boards-count)        :initial-element  t          ))
 
     (iterate
       (for b below (length boards-list))
@@ -93,5 +97,6 @@
           (for x below 5)
           (push `(,b ,y ,x) (aref locations (aref boards b y x))))))
 
-    (print (play-bingo numbers))))
+    (let ((winners (reduce #'mark-number numbers :initial-value nil)))
+      (format t "~a~%~a~%" (car (last winners)) (car winners)))))
 
