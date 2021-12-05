@@ -10,10 +10,11 @@
     (map 'list #'parse-integer regs)))
 
 (defun seq (a b)
-  (cond
-    ((< a b) (cons a (seq (1+ a) b)))
-    ((> a b) (cons a (seq (1- a) b)))
-    (t       (cons a nil))))
+  (cons
+    a
+    (cond
+      ((< a b) (seq (1+ a) b))
+      ((> a b) (seq (1- a) b))))) 
 
 (defun draw-segment (diagram1 diagram2)
   (lambda (segment)
