@@ -30,16 +30,21 @@
           (let ((value (aref-boards boards `(,b ,y ,x))))
             (sum (if value value 0))))))))
 
-(defun check-winner (coord switch)
-  (destructuring-bind (b y x) coord
-    (iterate
-      (with coord = (if switch (list b y 0) (list b 0 x)))
-      (repeat 5)
-      (cond
-        ((aref-boards boards coord) (leave nil))
-        (switch (incf (third  coord)))
-        (t (incf (second coord))))
-      (finally (return t)))))
+(defun check-winner (coord &optional switch)
+  (let
+    ((result
+       (destructuring-bind (b y x) coord
+         (iterate
+           (with coord = (if switch (list b y 0) (list b 0 x)))
+           (repeat 5)
+           (cond
+             ((aref-boards boards coord) (leave nil))
+             (switch (incf (third  coord)))
+             (t (incf (second coord))))
+           (finally (return t))))))
+    (if switch
+      result
+      (or result (check-winner coord t)))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
@@ -56,9 +61,7 @@
         (if 
           (and
             (aref still-playing (car first-coord))
-            (or
-              (check-winner first-coord t  )
-              (check-winner first-coord nil)))
+            (check-winner first-coord))
           (progn
             (setf (aref still-playing (car first-coord)) nil)
             (cons (* number (sum-winning-board first-coord)) winners))
