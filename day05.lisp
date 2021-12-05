@@ -7,8 +7,7 @@
 
 (defun decode (line)
   (multiple-value-bind (_ regs) (scan-to-strings "^(\\d+),(\\d+) -> (\\d+),(\\d+)+$" line)
-    (destructuring-bind (x1 y1 x2 y2) (map 'list #'parse-integer regs)
-      (list x1 y1 x2 y2))))
+    (map 'list #'parse-integer regs)))
 
 (defun seq (a b)
   (cond
