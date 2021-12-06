@@ -1,27 +1,41 @@
 (defpackage :day06
   (:use :cl :aoc-misc)
   (:export main)
-  (:import-from :cl-ppcre :split))
+  (:import-from :cl-ppcre :split)
+  (:import-from :serapeum :nlet))
 
 (in-package :day06)
 
-(defun cycle (fishes)
-  (destructuring-bind (zeros &rest rest) fishes
-    (incf (nth 6 rest) zeros)
-    (append rest `(,zeros))))
+(defun cycle (fishes &optional n zeros)
+  (cond
+    ((null fishes) (list zeros))
+    ((null zeros ) (cycle (cdr fishes) 0 (car fishes)))
+    (t
+      (cons
+        (+ (if (= 6 n) zeros 0) (car fishes))
+        (cycle (cdr fishes) (1+ n) zeros)))))
 
 (defun run-cycles (n fishes)
   (if (zerop n)
     fishes
     (run-cycles (1- n) (cycle fishes))))
 
+(defun decode (line &optional array fishes)
+  (cond
+    ((null array)
+     (decode
+       nil
+       (make-array '(9) :initial-element 0)
+       (mapcar #'parse-integer (split "," line))))
+    ((null fishes) (coerce array 'list))
+    (t
+      (progn
+        (incf (aref array (car fishes)))
+        (decode nil array (cdr fishes))))))
+
 (defun main ()
   (let
-    ((input
-       (loop :with array = (make-array '(9) :initial-element 0)
-             :for f :in (car (read-input-as-list 6 (lambda (l) (mapcar #'parse-integer (split "," l)))))
-             :do (incf (aref array f))
-             :finally (return (coerce array 'list)))))
+    ((input (car (read-input-as-list 6 #'decode))))
     (dolist (n '(80 256))
       (print (apply #'+ (run-cycles n input))))))
 
