@@ -1,8 +1,7 @@
 (defpackage :day06
   (:use :cl :aoc-misc)
   (:export main)
-  (:import-from :cl-ppcre :split)
-  (:import-from :serapeum :nlet))
+  (:import-from :cl-ppcre :split))
 
 (in-package :day06)
 
@@ -29,9 +28,8 @@
        (mapcar #'parse-integer (split "," line))))
     ((null fishes) (coerce array 'list))
     (t
-      (progn
-        (incf (aref array (car fishes)))
-        (decode nil array (cdr fishes))))))
+      (incf (aref array (car fishes)))
+      (decode nil array (cdr fishes)))))
 
 (defun main ()
   (let
