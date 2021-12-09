@@ -1,7 +1,7 @@
 (defpackage :day09
   (:use :cl :aoc-misc :aoc-coord :functional-queue)
   (:export main)
-  (:import-from :forfuncs :for/and)
+  (:import-from :forfuncs :for/and :for/fold :for/sum)
   (:import-from :serapeum :nlet))
 
 (in-package :day09)
@@ -26,24 +26,31 @@
                   (queue-snoc q neighbour))))) 
           *all-absolute-dirs* :initial-value (queue-tail queue))))))
 
+
 (defun main ()
   (setf heightmap (read-input-as-array 09 (lambda (c) (parse-integer (string c)))))
-  (let ((low-points '()))
-    (destructuring-bind (height width) (array-dimensions heightmap)
-      (loop :for y :below height :do
-        (loop :for x :below width :do
-          (let*
-            ((coord (make-coord x y))
-             (square (aref-coord heightmap coord)))
-            (when
-              (for/and
-                ((dir *all-absolute-dirs*))
-                (let*
-                  ((neighbour (next-coord dir coord))
-                   (nsquare (aref-coord-checked heightmap neighbour)))
-                  (and nsquare (>= nsquare square))))
-              (push coord low-points))))))
-    (print (loop :for lp :in low-points :sum (1+ (aref-coord heightmap lp))))
+
+  (let
+    ((low-points
+       (for/fold
+         ((lp '())) nil
+         ((coord
+            (destructuring-bind (height width) (array-dimensions heightmap)
+              (loop :for y :below height :append
+                (loop :for x :below width :collect (make-coord x y))))))
+         (let ((square (aref-coord heightmap coord)))
+           (if
+             (for/and
+               ((dir *all-absolute-dirs*))
+               (let*
+                 ((neighbour (next-coord dir coord))
+                  (nsquare (aref-coord-checked heightmap neighbour)))
+                 (or (null nsquare) (> nsquare square))))
+             (cons coord lp)
+             lp)))))
+
+    (print (for/sum ((lp low-points)) (1+ (aref-coord heightmap lp))))
+
     (destructuring-bind (a b c &rest _)
       (sort
         (mapcar
