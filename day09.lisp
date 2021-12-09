@@ -1,8 +1,7 @@
 (defpackage :day09
   (:use :cl :aoc-misc :aoc-coord :functional-queue)
   (:export main)
-  (:import-from :forfuncs :for/and :for/fold :for/sum)
-  (:import-from :serapeum :nlet))
+  (:import-from :forfuncs :for/and :for/fold :for/sum))
 
 (in-package :day09)
 
@@ -18,11 +17,11 @@
           (lambda (q d)
             (let*
               ((neighbour (next-coord d coord))
-               (nsquare (aref-coord-checked heightmap neighbour)))
-              (if (or (null nsquare) (= 9 nsquare))
+               (nsquare (aref-coord-checked heightmap neighbour 9)))
+              (if (= 9 nsquare)
                 q
                 (progn
-                  (setf (aref-coord heightmap neighbour) nil)
+                  (setf (aref-coord heightmap neighbour) 9)
                   (queue-snoc q neighbour))))) 
           *all-absolute-dirs* :initial-value (queue-tail queue))))))
 
@@ -33,19 +32,17 @@
   (let
     ((low-points
        (for/fold
-         ((lp '())) nil
-         ((coord
-            (destructuring-bind (height width) (array-dimensions heightmap)
-              (loop :for y :below height :append
-                (loop :for x :below width :collect (make-coord x y))))))
+         ((lp '()))
+         nil
+         ((coord (all-matrix-coords heightmap)))
          (let ((square (aref-coord heightmap coord)))
            (if
              (for/and
                ((dir *all-absolute-dirs*))
                (let*
                  ((neighbour (next-coord dir coord))
-                  (nsquare (aref-coord-checked heightmap neighbour)))
-                 (or (null nsquare) (> nsquare square))))
+                  (nsquare (aref-coord-checked heightmap neighbour 9)))
+                 (> nsquare square)))
              (cons coord lp)
              lp)))))
 
@@ -56,7 +53,7 @@
         (mapcar
           (lambda (lp)
             (progn
-              (setf (aref-coord heightmap lp) nil)
+              (setf (aref-coord heightmap lp) 9)
               (explore-map 0 (queue-snoc (empty-queue) lp))))
           low-points)
         '>)
