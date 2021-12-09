@@ -1,6 +1,7 @@
 (defpackage :day09
   (:use :cl :aoc-misc :aoc-coord :functional-queue)
   (:export main)
+  (:import-from :forfuncs :for/and)
   (:import-from :serapeum :nlet))
 
 (in-package :day09)
@@ -35,24 +36,22 @@
             ((coord (make-coord x y))
              (square (aref-coord heightmap coord)))
             (when
-              (nlet rec ((dirs *all-absolute-dirs*))
-                (if (null dirs)
-                  t
-                  (let*
-                    ((neighbour (next-coord (car dirs) coord))
-                     (nsquare (aref-coord-checked heightmap neighbour)))
-                    (cond 
-                      ((null nsquare) (rec (cdr dirs)))
-                      ((< square nsquare) (rec (cdr dirs)))
-                      (t nil)))))
+              (for/and
+                ((dir *all-absolute-dirs*))
+                (let*
+                  ((neighbour (next-coord dir coord))
+                   (nsquare (aref-coord-checked heightmap neighbour)))
+                  (and nsquare (>= nsquare square))))
               (push coord low-points))))))
     (print (loop :for lp :in low-points :sum (1+ (aref-coord heightmap lp))))
     (destructuring-bind (a b c &rest _)
       (sort
-        (loop :for lp :in low-points :collect
-          (progn
-            (setf (aref-coord heightmap lp) nil)
-            (explore-map 0 (queue-snoc (empty-queue) lp))))
+        (mapcar
+          (lambda (lp)
+            (progn
+              (setf (aref-coord heightmap lp) nil)
+              (explore-map 0 (queue-snoc (empty-queue) lp))))
+          low-points)
         '>)
       (print (* a b c)))))
 
