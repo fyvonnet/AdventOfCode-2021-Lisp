@@ -7,23 +7,26 @@
 
 (defvar heightmap)
 
-(defun explore-map (size queue)
+(defun fill-queue (coord)
+  (lambda (queue dir)
+    (let*
+      ((neighbour (next-coord dir coord)))
+      (if (= 9 (aref-coord-checked heightmap neighbour 9))
+        queue
+        (progn
+          (setf (aref-coord heightmap neighbour) 9)
+          (queue-snoc queue neighbour))))) )
+
+(defun measure-basin (lp &optional (size 0) (queue (queue-snoc (empty-queue) lp)))
   (if (queue-empty-p queue)
-    size
-    (let ((coord (queue-head queue)))
-      (explore-map
-        (1+ size)
-        (reduce
-          (lambda (q d)
-            (let*
-              ((neighbour (next-coord d coord))
-               (nsquare (aref-coord-checked heightmap neighbour 9)))
-              (if (= 9 nsquare)
-                q
-                (progn
-                  (setf (aref-coord heightmap neighbour) 9)
-                  (queue-snoc q neighbour))))) 
-          *all-absolute-dirs* :initial-value (queue-tail queue))))))
+    (1- size)
+    (measure-basin
+      nil
+      (1+ size)
+      (reduce
+        (fill-queue (queue-head queue))
+        *all-absolute-dirs*
+        :initial-value (queue-tail queue)))))
 
 
 (defun main ()
@@ -33,29 +36,19 @@
     ((low-points
        (for/fold
          ((lp '()))
-         nil
          ((coord (all-matrix-coords heightmap)))
-         (let ((square (aref-coord heightmap coord)))
-           (if
-             (for/and
-               ((dir *all-absolute-dirs*))
-               (let*
-                 ((neighbour (next-coord dir coord))
-                  (nsquare (aref-coord-checked heightmap neighbour 9)))
-                 (> nsquare square)))
-             (cons coord lp)
-             lp)))))
+         (if
+           (for/and
+             ((dir *all-absolute-dirs*))
+             (< 
+               (aref-coord heightmap coord)
+               (aref-coord-checked heightmap (next-coord dir coord) 9)))
+           (cons coord lp)
+           lp))))
 
     (print (for/sum ((lp low-points)) (1+ (aref-coord heightmap lp))))
 
     (destructuring-bind (a b c &rest _)
-      (sort
-        (mapcar
-          (lambda (lp)
-            (progn
-              (setf (aref-coord heightmap lp) 9)
-              (explore-map 0 (queue-snoc (empty-queue) lp))))
-          low-points)
-        '>)
+      (sort (mapcar #'measure-basin low-points) '>)
       (print (* a b c)))))
 
