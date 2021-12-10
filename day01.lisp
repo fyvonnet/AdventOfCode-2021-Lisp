@@ -1,14 +1,15 @@
 (defpackage :day01
   (:use :cl :aoc-misc)
-  (:export main))
+  (:export main)
+  (:import-from :forfuncs :for/count :for/list))
 
 (in-package :day01)
 
 (defun count-increases (measurements)
-  (if (= (length measurements) 1)
-    0
-    (destructuring-bind (a b &rest _) measurements
-      (+ (if (< a b) 1 0) (count-increases (cdr measurements))))))
+  (for/count
+    ((a      measurements)
+     (b (cdr measurements)))
+    (< a b)))
 
 (defun sums-of-three (measurements)
   (unless (= (length measurements) 2)
@@ -17,8 +18,13 @@
       (sums-of-three (cdr measurements)))))
 
 (defun main ()
-  (let
-    ((input (read-input-as-list 1 #'parse-integer)))
-    (dolist (func '(identity sums-of-three))
-      (print (count-increases (funcall func input))))))
+  (let ((measurements (read-input-as-list 1 #'parse-integer)))
+    (print (count-increases measurements))
+    (print
+      (count-increases
+        (for/list
+          ((a       measurements)
+           (b (cdr  measurements))
+           (c (cddr measurements)))
+          (+ a b c))))))
 
