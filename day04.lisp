@@ -1,7 +1,8 @@
 (defpackage :day04
   (:use :cl :aoc-misc :iterate)
   (:export main)
-  (:import-from :cl-ppcre :split))
+  (:import-from :cl-ppcre :split)
+  (:import-from :forfuncs :for/and))
 
 (in-package :day04)
 
@@ -30,21 +31,11 @@
           (let ((value (aref-boards boards `(,b ,y ,x))))
             (sum (if value value 0))))))))
 
-(defun check-winner (coord &optional switch)
-  (let
-    ((result
-       (destructuring-bind (b y x) coord
-         (iterate
-           (with coord = (if switch (list b y 0) (list b 0 x)))
-           (repeat 5)
-           (cond
-             ((aref-boards boards coord) (leave nil))
-             (switch (incf (third  coord)))
-             (t (incf (second coord))))
-           (finally (return t))))))
-    (if switch
-      result
-      (or result (check-winner coord t)))))
+(defun check-winner (coord)
+  (destructuring-bind (b y x) coord
+    (or
+      (for/and ((i '(0 1 2 3 4))) (null (aref boards b i x)))
+      (for/and ((i '(0 1 2 3 4))) (null (aref boards b y i))))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
