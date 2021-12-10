@@ -2,7 +2,8 @@
   (:use :cl :aoc-misc :iterate)
   (:export main)
   (:import-from :cl-ppcre :split)
-  (:import-from :forfuncs :for/and))
+  (:import-from :forfuncs :for/and :for/sum)
+  (:import-from :trivia :match))
 
 (in-package :day04)
 
@@ -23,13 +24,14 @@
 
 (defun sum-winning-board (coord)
   (destructuring-bind (b _ _) coord
-    (iterate
-      (for y below 5)
-      (sum
-        (iterate
-          (for x below 5)
-          (let ((value (aref-boards boards `(,b ,y ,x))))
-            (sum (if value value 0))))))))
+    (for/sum
+      ((coord
+         (loop for y below 5 appending
+           (loop for x below 5 collecting
+             (list b y x)))))
+      (match (aref-boards boards coord)
+        (nil 0)
+        (n n)))))
 
 (defun check-winner (coord)
   (destructuring-bind (b y x) coord
