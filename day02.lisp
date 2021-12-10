@@ -1,41 +1,37 @@
 (defpackage :day02
   (:use :cl :aoc-misc)
   (:export main)
-  (:import-from :cl-ppcre :split))
+  (:import-from :cl-ppcre :split)
+  (:import-from :forfuncs :for/fold))
 
 (in-package :day02)
 
 (defun decode (line)
   (destructuring-bind (cmd x) (split " " line)
-    (cons (intern cmd "KEYWORD") (parse-integer x))))
+    (list (intern cmd "KEYWORD") (parse-integer x))))
 
-(defun solve (input forw-func down-func up-func)
-  (destructuring-bind (h d _)
-    (reduce
-      (lambda (data cmd)
-        (destructuring-bind (h d a) data
-          (funcall
-            (case (car cmd)
-              (:|forward| forw-func)
-              (:|down|    down-func)
-              (:|up|        up-func))
-            h d a (cdr cmd))))
-      input :initial-value '(0 0 0))
-    (print (* h d))))
+(defmacro solve (forw-func down-func up-func)
+  `(for/fold
+     ((h 0) (d 0) (a 0))
+     ((step input))
+     (destructuring-bind (cmd x) step
+       (case cmd
+         (:|forward| ,forw-func)
+         (:|down|    ,down-func)
+         (:|up|        ,up-func)))
+     :result (format t "~d~%" (* h d))))
 
 (defun main ()
   (let
     ((input (read-input-as-list 02 #'decode)))
 
     (solve 
-      input
-      (lambda (h d a x) (list (+ h x) d    0))
-      (lambda (h d a x) (list    h (+ d x) 0))
-      (lambda (h d a x) (list    h (- d x) 0)))
+      (values (+ h x) d    0)
+      (values    h (+ d x) 0)
+      (values    h (- d x) 0))
 
     (solve 
-      input
-      (lambda (h d a x) (list (+ h x) (+ d (* a x))    a   ))
-      (lambda (h d a x) (list    h       d          (+ a x)))
-      (lambda (h d a x) (list    h       d          (- a x))))))
+      (values (+ h x) (+ d (* a x))    a   )
+      (values    h       d          (+ a x))
+      (values    h       d          (- a x)))))
 
