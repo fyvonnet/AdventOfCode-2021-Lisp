@@ -11,7 +11,7 @@
   (lambda (queue dir)
     (let*
       ((neighbour (next-coord dir coord)))
-      (if (= 9 (aref-coord-checked heightmap neighbour 9))
+      (if (= 9 (aref-coord-safe heightmap neighbour 9))
         queue
         (progn
           (setf (aref-coord heightmap neighbour) 9)
@@ -42,7 +42,7 @@
              ((dir *all-absolute-dirs*))
              (< 
                (aref-coord heightmap coord)
-               (aref-coord-checked heightmap (next-coord dir coord) 9)))
+               (aref-coord-safe heightmap (next-coord dir coord) 9)))
            (cons coord lp)
            lp))))
 

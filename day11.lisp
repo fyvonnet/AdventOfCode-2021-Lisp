@@ -23,7 +23,7 @@
       ((q (queue-tail queue)))
       ((n neighbours))
       (let ((ncoord (coord+ n (queue-head queue))))
-        (match (aref-coord-checked octopuses ncoord 0)
+        (match (aref-coord-safe octopuses ncoord 0)
           (9
            (progn
              (setf (aref-coord octopuses ncoord) 0)
