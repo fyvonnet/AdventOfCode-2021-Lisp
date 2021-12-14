@@ -17,22 +17,16 @@
           (lookup rules name) :initial-value map))
       :result (run-steps (1- n) rules (convert 'list map)))))
 
-(defun count-letters (polymer)
-  (for/fold
-    ((map (empty-map 0)))
-    ((pair polymer))
-    (destructuring-bind (letters . count) pair
-      (reduce
-        (lambda (m l) (with m l (+ count (lookup m l))))
-        letters :initial-value map))
-    :result
-    (let ((counts (sort (mapcar (lambda (x) (ceiling (cdr x) 2)) (convert 'list map)) '>)))
-      (print (- (first counts) (car (last counts)))))))
-
 (defun main ()
   (let*
     ((input (read-input-as-list 14))
      (template-letters (coerce (car input) 'list))
+     (extremities (list (car template-letters) (car (last template-letters))))
+     (pre-count
+       (for/fold
+         ((map (empty-map 0)))
+         ((letter extremities))
+         (with map letter (1+ (lookup map letter)))))
      (rules
        (for/fold 
          ((rules (empty-map)))
@@ -48,8 +42,18 @@
          (let ((pair (list a b)))
            (with map pair (1+ (lookup map pair))))
          :result (convert 'list map)))
-     (first-polymer (run-steps 10 rules template)))
+     (first-polymer  (run-steps 10 rules template))
+     (second-polymer (run-steps 30 rules first-polymer)))
 
-    (count-letters first-polymer)
-    (count-letters (run-steps 30 rules first-polymer))))
+    (dolist (polymer `(,first-polymer ,second-polymer))
+      (for/fold
+        ((map pre-count))
+        ((pair polymer))
+        (destructuring-bind (letters . count) pair
+          (reduce
+            (lambda (m l) (with m l (+ count (lookup m l))))
+            letters :initial-value map))
+        :result
+        (let ((counts (sort (mapcar (lambda (x) (/ (cdr x) 2)) (convert 'list map)) '>)))
+          (print (- (first counts) (car (last counts)))))))))
 
