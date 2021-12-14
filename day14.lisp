@@ -5,45 +5,51 @@
 
 (in-package :day14)
 
-(defun make-rules (input)
-  (for/fold 
-    ((rules (empty-map)))
-    ((line input))
-    (multiple-value-bind (_ regs) (scan-to-strings "^(.)(.) -> (.)$" line)
-      (destructuring-bind (a b c) (map 'list (lambda (x) (char x 0)) regs)
-        (with rules (cons a b) c)))))
-
 (defun run-steps (n rules polymer)
   (if (zerop n)
     polymer
     (for/fold
-      ((output `(,(car polymer))))
-      ((a polymer)
-       (b (cdr polymer)))
-      (append
-        (list b (lookup rules (cons a b)))
-        output)
-      :result (run-steps (1- n) rules (reverse output)))))
+      ((map (empty-map 0)))
+      ((pair polymer))
+      (destructuring-bind (name . count) pair
+        (reduce
+          (lambda (m p) (with m p (+ count (lookup m p))))
+          (lookup rules name) :initial-value map))
+      :result (run-steps (1- n) rules (convert 'list map)))))
+
+(defun count-letters (polymer)
+  (for/fold
+    ((map (empty-map 0)))
+    ((pair polymer))
+    (destructuring-bind (letters . count) pair
+      (reduce
+        (lambda (m l) (with m l (+ count (lookup m l))))
+        letters :initial-value map))
+    :result
+    (let ((counts (sort (mapcar (lambda (x) (ceiling (cdr x) 2)) (convert 'list map)) '>)))
+      (print (- (first counts) (car (last counts)))))))
 
 (defun main ()
   (let*
-    ((input (read-input-as-list 14 #'identity))
-     (template (coerce (car input) 'list))
-     (rules (make-rules (cddr input)))
-     (final-polymer (run-steps 10 rules template)))
+    ((input (read-input-as-list 14))
+     (template-letters (coerce (car input) 'list))
+     (rules
+       (for/fold 
+         ((rules (empty-map)))
+         ((line (cddr input)))
+         (multiple-value-bind (_ regs) (scan-to-strings "^(.)(.) -> (.)$" line)
+           (destructuring-bind (a b c) (map 'list (lambda (x) (char x 0)) regs)
+             (with rules (list a b) (list (list a c) (list c b)))))))
+     (template
+       (for/fold
+         ((map (empty-map 0)))
+         ((a template-letters)
+          (b (cdr template-letters)))
+         (let ((pair (list a b)))
+           (with map pair (1+ (lookup map pair))))
+         :result (convert 'list map)))
+     (first-polymer (run-steps 10 rules template)))
 
-    (let
-      ((count
-         (for/fold
-           ((map (empty-map 0)))
-           ((element final-polymer))
-           (with map element (1+ (lookup map element)))
-           :result (mapcar #'cdr (convert 'list map)))))
-      (for/fold
-        ((qt-least (car count))
-         (qt-most (car count)))
-        ((qt (cdr count)))
-        (values
-          (min qt qt-least)
-          (max qt qt-most))
-        :result (print (- qt-most qt-least))))))
+    (count-letters first-polymer)
+    (count-letters (run-steps 30 rules first-polymer))))
+
