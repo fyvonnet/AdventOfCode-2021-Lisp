@@ -21,12 +21,6 @@
   (let*
     ((input (read-input-as-list 14))
      (template-letters (coerce (car input) 'list))
-     (extremities (list (car template-letters) (car (last template-letters))))
-     (pre-count
-       (for/fold
-         ((map (empty-map 0)))
-         ((letter extremities))
-         (with map letter (1+ (lookup map letter)))))
      (rules
        (for/fold 
          ((rules (empty-map)))
@@ -47,13 +41,11 @@
 
     (dolist (polymer `(,first-polymer ,second-polymer))
       (for/fold
-        ((map pre-count))
+        ((map (with (empty-map 0) (car (last template-letters)) 1)))
         ((pair polymer))
-        (destructuring-bind (letters . count) pair
-          (reduce
-            (lambda (m l) (with m l (+ count (lookup m l))))
-            letters :initial-value map))
+        (destructuring-bind ((letter _) . count) pair
+            (with map letter (+ count (lookup map letter))))
         :result
-        (let ((counts (sort (mapcar (lambda (x) (/ (cdr x) 2)) (convert 'list map)) '>)))
+        (let ((counts (sort (mapcar #'cdr (convert 'list map)) '>)))
           (print (- (first counts) (car (last counts)))))))))
 
