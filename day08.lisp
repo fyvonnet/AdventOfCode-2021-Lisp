@@ -48,10 +48,9 @@
       (let ((alist (decode-digits digits)))
         (values
           (+ sum1
-             (for/fold
-               ((count 0))
+             (for/count
                ((display displays))
-               (+ count (case (length display) (2 1) (4 1) (3 1) (7 1) (otherwise 0)))))
+               (member (length display) '(2 3 4 7))))
           (+ sum2
              (for/fold
                ((value 0))
