@@ -1,6 +1,5 @@
 (defpackage :day22
-  (:use :cl :aoc-misc :cl-ppcre :forfuncs)
-  (:import-from :fset :empty-set :with :less :size)
+  (:use :cl :aoc-misc :cl-ppcre)
   (:export main))
 
 (in-package :day22)
@@ -15,10 +14,11 @@
 
 (defun main ()
   (let
-    ((input (read-input-as-list 22 #'parse)))
-    (for/fold
-      ((set (empty-set)))
-      ((step input))
+    ((input (read-input-as-list 22 #'parse))
+     (array (make-array '(101 101 101) :initial-element nil))
+     (cubes 0))
+
+    (loop for step in input doing
       (destructuring-bind (turn-on xa xb ya yb za zb) step
         (let
           ((xmin (max -50 (min xa xb)))
@@ -26,15 +26,19 @@
            (ymin (max -50 (min ya yb)))
            (ymax (min  50 (max ya yb)))
            (zmin (max -50 (min za zb)))
-           (zmax (min  50 (max za zb)))
-           (local-set set))
-          (loop for z from zmin to zmax appending
-            (loop for y from ymin to ymax appending
-              (loop for x from xmin to xmax collecting
-                  (if turn-on
-                    (setf local-set (with local-set (list x y z)))
-                    (setf local-set (less local-set (list x y z)))
-                    )))
-            finally (return local-set))))
-      :result (print (size set)))))
+           (zmax (min  50 (max za zb))))
+          (loop for z from zmin to zmax doing
+            (loop for y from ymin to ymax doing
+              (loop for x from xmin to xmax doing
+                (let*
+                  ((xx (+ 50 x))
+                   (yy (+ 50 y))
+                   (zz (+ 50 z))
+                   (is-on (aref array zz yy xx)))
+                  (cond
+                    ((and      turn-on  (not is-on)) (incf cubes))
+                    ((and (not turn-on)      is-on ) (decf cubes)))
+                  (setf (aref array zz yy xx) turn-on))))))))
+
+    (print cubes)))
 
