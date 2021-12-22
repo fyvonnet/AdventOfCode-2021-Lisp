@@ -25,23 +25,20 @@
     (destructuring-bind (in-height in-width) (array-dimensions in-image)
       (let*
         ((height (+ 2 in-height))
-         (width (+ 2 in-width))
+         (width  (+ 2 in-width ))
          (image (make-array (list height width))))
         (loop for y below height doing
           (loop for x below width doing
             (let
-              ((in-x (- x 2))
-               (in-y (- y 2))
+              ((in-x (- x 1))
+               (in-y (- y 1))
                (i 0))
-              (loop
-                with bit-value = 1
-                with sum = 0
-                for ny from 2 downto 0 doing
-                (loop for nx from 2 downto 0 doing
+              (loop for ny from -1 to 1 doing
+                (loop for nx from -1 to 1 doing
                   (progn
+                    (setf i (* 2 i))
                     (when (char= (aref-safe in-image (+ in-y ny) (+ in-x nx) default) #\#)
-                      (incf i bit-value))
-                    (setf bit-value (* 2 bit-value)))))
+                      (incf i)))))
               (setf (aref image y x) (aref algorithm i)))))
         (enhance-image algorithm image (1- count) (aref algorithm (if (char= default #\.) 0 511)))))))
 
