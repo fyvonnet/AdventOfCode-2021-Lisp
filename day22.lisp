@@ -4,17 +4,21 @@
 
 (in-package :day22)
 
-(defun parse (line)
-  (multiple-value-bind (_ regs)
-    (scan-to-strings "(\\w+) x=(-?\\d+)\.\.(-?\\d+),y=(-?\\d+)\.\.(-?\\d+),z=(-?\\d+)\.\.(-?\\d+)" line)
-    (let ((regs-lst (coerce regs 'list)))
-      (cons
-        (string= (car regs-lst) "on")
-        (mapcar #'parse-integer (cdr regs-lst))))))
+(defun parse2 (line)
+  (destructuring-bind (onoff rest) (split " " line)
+    (cons
+      (string= onoff "on")
+      (apply
+        #'append
+        (mapcar
+          (lambda (str)
+            (multiple-value-bind (_ regs) (scan-to-strings ".=(-?\\d+)\.\.(-?\\d+)" str)
+              (map 'list #'parse-integer regs)))
+          (split "," rest))))))
 
 (defun main ()
   (let
-    ((input (read-input-as-list 22 #'parse))
+    ((input (read-input-as-list 22 #'parse2))
      (array (make-array '(101 101 101) :initial-element nil))
      (cubes 0))
 
