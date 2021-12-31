@@ -11,12 +11,6 @@
      (b (cdr measurements)))
     (< a b)))
 
-(defun sums-of-three (measurements)
-  (unless (= (length measurements) 2)
-    (cons
-      (destructuring-bind (a b c &rest _) measurements (+ a b c))
-      (sums-of-three (cdr measurements)))))
-
 (defun main ()
   (let ((measurements (read-input-as-list 1 #'parse-integer)))
     (print (count-increases measurements))
