@@ -1,5 +1,5 @@
 (defpackage :day04
-  (:use :cl :aoc-misc :iterate)
+  (:use :cl :aoc-misc)
   (:export main)
   (:import-from :cl-ppcre :split)
   (:import-from :forfuncs :for/and :for/sum)
@@ -24,20 +24,10 @@
 
 (defun sum-winning-board (coord)
   (destructuring-bind (b _ _) coord
-    (for/sum
-      ((coord
-         (loop for y below 5 appending
-           (loop for x below 5 collecting
-             (list b y x)))))
-      (match (aref-boards boards coord)
-        (nil 0)
-        (n n)))))
-
-(defun check-winner (coord)
-  (destructuring-bind (b y x) coord
-    (or
-      (for/and ((i '(0 1 2 3 4))) (null (aref boards b i x)))
-      (for/and ((i '(0 1 2 3 4))) (null (aref boards b y i))))))
+    (loop for y below 5 summing
+          (loop for x below 5
+                for v = (aref boards b y x)
+                when v summing v))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
@@ -52,9 +42,12 @@
       (setf (aref-boards boards first-coord) nil)
       (mark-number
         (if 
-          (and
-            (aref still-playing (car first-coord))
-            (check-winner first-coord))
+          (destructuring-bind (b y x) first-coord
+            (and
+              (aref still-playing b)
+              (or
+                (for/and ((i '(0 1 2 3 4))) (null (aref boards b i x)))
+                (for/and ((i '(0 1 2 3 4))) (null (aref boards b y i))))))
           (progn
             (setf (aref still-playing (car first-coord)) nil)
             (cons (* number (sum-winning-board first-coord)) winners))
@@ -73,13 +66,10 @@
     (setf locations     (make-array  (list (length numbers)) :initial-element  nil        ))
     (setf still-playing (make-array `(,boards-count)         :initial-element  t          ))
 
-    (iterate
-      (for b below (length boards-list))
-      (iterate
-        (for y below 5)
-        (iterate
-          (for x below 5)
-          (push `(,b ,y ,x) (aref locations (aref boards b y x))))))
+    (loop for b below (length boards-list) doing
+          (loop for y below 5 doing
+                (loop for x below 5 doing
+                      (push `(,b ,y ,x) (aref locations (aref boards b y x))))))
 
     (let ((winners (reduce #'mark-number numbers :initial-value nil)))
       (format t "~a~%~a~%" (car (last winners)) (car winners)))))
