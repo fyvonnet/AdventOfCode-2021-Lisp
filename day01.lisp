@@ -1,7 +1,7 @@
 (defpackage :day01
   (:use :cl :aoc-misc)
   (:export main)
-  (:import-from :forfuncs :for/count :for/list))
+  (:import-from :forfuncs :for/count))
 
 (in-package :day01)
 
@@ -13,12 +13,11 @@
 
 (defun main ()
   (let ((measurements (read-input-as-list 1 #'parse-integer)))
-    (print (count-increases measurements))
-    (print
-      (count-increases
-        (for/list
-          ((a       measurements)
-           (b (cdr  measurements))
-           (c (cddr measurements)))
-          (+ a b c))))))
+    (format t "~D~%" (count-increases measurements))
+    (format t "~D~%"
+            (count-increases
+              (loop for a in       measurements
+                    for b in (cdr  measurements)
+                    for c in (cddr measurements)
+                    collect (+ a b c))))))
 
