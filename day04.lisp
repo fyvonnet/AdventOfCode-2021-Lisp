@@ -1,5 +1,5 @@
 (defpackage :day04
-  (:use :cl :aoc-misc)
+  (:use :cl :aoc-misc :iterate)
   (:export main)
   (:import-from :cl-ppcre :split)
   (:import-from :forfuncs :for/and :for/sum)
@@ -24,10 +24,12 @@
 
 (defun sum-winning-board (coord)
   (destructuring-bind (b _ _) coord
-    (loop for y below 5 summing
-          (loop for x below 5
-                for v = (aref boards b y x)
-                when v summing v))))
+    (iterate outer
+      (for y below 5)
+      (iterate
+          (for x below 5)
+          (for v = (aref boards b y x))
+          (when v (in outer (summing v)))))))
 
 (defun aref-boards (boards coord)
   (apply #'aref (cons boards coord)))
