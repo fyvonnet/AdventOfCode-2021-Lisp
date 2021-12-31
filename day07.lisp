@@ -8,8 +8,9 @@
 (defun main ()
   (let*
     ((positions (mapcar #'parse-integer (split "," (car (read-input-as-list 07)))))
-     (max-pos (loop :for p :in positions :maximize p)))
-    (dolist (func (list #'identity (lambda (n) (/ (* (1+ n) n) 2))))
+     (max-pos (reduce #'max positions))
+     (triangular (coerce (loop :for n :to max-pos :collect (/ (* (1+ n) n) 2)) 'vector)))
+    (dolist (func (list #'identity (lambda (n) (aref triangular n))))
       (print
         (loop :for new-pos :to max-pos
               :minimize (loop :for p :in positions
