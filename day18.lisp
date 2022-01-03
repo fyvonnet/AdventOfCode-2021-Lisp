@@ -87,6 +87,6 @@
   (let
     ((input (read-input-as-list 18 #'parse)))
     (format t "~D~%~D~%"
-            (magnitude (reduce #'add-sfnums (cdr input) :initial-value (car input)))
+            (magnitude (reduce #'add-sfnums input))
             (find-max input))))
 
