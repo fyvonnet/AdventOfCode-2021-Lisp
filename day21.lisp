@@ -44,22 +44,20 @@
            (if a-turn
              (+ a-score (1+ new-pos))
              (+ b-score (1+ new-pos)))))
-        (cond
-          ((>= new-score 21)
-           (let ((lst (if a-turn '(1 0) '(0 1))))
-             (setf (gethash (list a-score a-pos b-score b-pos throw a-turn) cache) lst) lst))
-          (t
-            (let*
-              ((func
-                 (if a-turn
-                   (lambda (th) (get-count-wins new-score new-pos b-score b-pos th nil))
-                   (lambda (th) (get-count-wins a-score a-pos new-score new-pos th t))))
-               (wins
-                 (reduce
-                   (lambda (x y) (mapcar #'+ x y))
-                   (mapcar func throws-points))))
-              (setf (gethash (list a-score a-pos b-score b-pos throw a-turn) cache) wins)
-              wins)))))))
+        (if (>= new-score 21)
+          (let ((lst (if a-turn '(1 0) '(0 1))))
+            (setf (gethash (list a-score a-pos b-score b-pos throw a-turn) cache) lst) lst)
+          (let*
+            ((func
+               (if a-turn
+                 (lambda (th) (get-count-wins new-score new-pos b-score b-pos th nil))
+                 (lambda (th) (get-count-wins a-score a-pos new-score new-pos th t))))
+             (wins
+               (reduce
+                 (lambda (x y) (mapcar #'+ x y))
+                 (mapcar func throws-points))))
+            (setf (gethash (list a-score a-pos b-score b-pos throw a-turn) cache) wins)
+            wins))))))
 
 (defun main ()
   (let ((players (read-input-as-list 21 #'parse)))
