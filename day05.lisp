@@ -41,10 +41,9 @@
 
     (dolist (l '(0 1))
       (print
-        (iterate
+        (iterate outer
           (for y below 1000)
-          (sum
             (iterate
               (for x below 1000)
-              (counting (< 1 (aref diagram l y x))))))))))
+              (in outer (counting (< 1 (aref diagram l y x))))))))))
 
