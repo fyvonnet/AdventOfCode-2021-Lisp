@@ -1,6 +1,7 @@
 (defpackage :day17
-  (:use :cl :aoc-misc :cl-ppcre :forfuncs :trivia)
+  (:use :cl :aoc-misc :cl-ppcre :forfuncs :trivia :iterate)
   (:export main)
+  (:import-from :alexandria :iota)
   (:import-from :serapeum :nlet))
 
 (in-package :day17)
@@ -54,13 +55,13 @@
        (for/fold
          ((max-y 0)
           (vel-ys nil))
-         ((vel-y (loop for i from -100 to 100 collect i)))
+         ((vel-y (iota 201 :start -100))) ; [-100..100]
          (match (move-probe-y target-area vel-y)
            (nil (values max-y vel-ys))
            (n (values (max max-y n) (cons vel-y vel-ys))))
          :result
          (progn
-           (format t "~d~%" max-y)
+           (print max-y)
            vel-ys)))
      (vel-xs
        (reduce
@@ -68,14 +69,12 @@
            (match (move-probe-x target-area vel-y)
              (nil vel-ys)
              (n (cons n vel-ys))))
-         (loop for i from 0 to 300 collect i)
-         :initial-value nil)))
+         (iota 300) :initial-value nil)))
 
     (print
-      (loop for vel-y in vel-ys summing
-        (loop
-          with counter = 0
-          for vel-x in vel-xs 
-          when (move-probe target-area vel-x vel-y) do (incf counter)
-          finally (return counter))))))
+      (iterate outer
+        (for vel-y in vel-ys)
+        (iterate
+          (for vel-x in vel-xs)
+          (in outer (counting (move-probe target-area vel-x vel-y))))))))
 
