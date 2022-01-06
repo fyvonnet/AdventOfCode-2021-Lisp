@@ -6,7 +6,7 @@
 
 (in-package :day02)
 
-(defun decode (line)
+(defun parse (line)
   (destructuring-bind (cmd x) (split " " line)
     (list (intern cmd "KEYWORD") (parse-integer x))))
 
@@ -16,22 +16,13 @@
      ((step input))
      (destructuring-bind (cmd x) step
        (case cmd
-         (:|forward| ,forw-func)
-         (:|down|    ,down-func)
-         (:|up|        ,up-func)))
+         (:|forward| (values ,@forw-func))
+         (:|down|    (values ,@down-func))
+         (:|up|      (values ,@up-func))))
      :result (format t "~d~%" (* h d))))
 
 (defun main ()
-  (let
-    ((input (read-input-as-list 02 #'decode)))
-
-    (solve 
-      (values (+ h x) d    0)
-      (values    h (+ d x) 0)
-      (values    h (- d x) 0))
-
-    (solve 
-      (values (+ h x) (+ d (* a x))    a   )
-      (values    h       d          (+ a x))
-      (values    h       d          (- a x)))))
+  (let ((input (read-input-as-list 2 #'parse)))
+    (solve ((+ h x) d 0) (h (+ d x) 0) (h (- d x) 0))
+    (solve ((+ h x) (+ d (* a x)) a) (h d (+ a x)) (h d (- a x)))))
 
